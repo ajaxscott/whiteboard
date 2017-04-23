@@ -1,0 +1,17 @@
+extends layout
+
+block links
+  link(rel='stylesheet', href='/stylesheets/index.css')
+
+block content
+  h1= title
+  p Welcome to #{title}
+  a(href='whiteboard') whiteboard
+  br
+  a(href='webSocketTest') WebSocket Test
+  br
+  span Move text in canvas:&nbsp;
+  span
+    a(href='https://jsfiddle.net/ajaxscott/z97abtb8/16/') https://jsfiddle.net/ajaxscott/z97abtb8/16/
+  footer
+    span 浙ICP备15033535号-2

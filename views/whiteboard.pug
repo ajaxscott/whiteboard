@@ -1,0 +1,36 @@
+extends layout
+
+block links
+  link(rel='stylesheet', href='/stylesheets/whiteboard.css')
+
+block content
+  canvas(id='myCanvas', width=512, height=512)
+    Your browser does not support the HTML5 canvas tag.
+  br
+  span Choose an action:&nbsp;
+  //button(id='clearCanvas', type='button') Clear
+  button(id='undo', type='button') Undo
+  button(id='redo', type='button') Redo
+  br
+  span Choose a shape:&nbsp;
+  button(id='line') Line
+  button(id='rect') Rect
+  button(id='arc') Arc
+  br
+  span Choose a color:&nbsp;
+  button(id='purple') Purple
+  button(id='green') Green
+  button(id='yellow') Yellow
+  button(id='brown') Brown
+  br
+  span Choose a lineWidth:&nbsp;
+  button(id='smallSize') Small
+  button(id='normalSize') Normal
+  button(id='largeSize') Large
+  button(id='hugeSize') Huge
+  script(
+    src="https://code.jquery.com/jquery-3.2.1.slim.min.js"
+    integrity="sha256-k2WSCIexGzOj3Euiig+TlR8gA0EmPjuc79OEeY5L45g="
+    crossorigin="anonymous"
+  )
+  script(type='text/javascript', src='javascripts/whiteboard.js')
