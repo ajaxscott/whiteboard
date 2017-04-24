@@ -44,7 +44,7 @@ wss.on('connection', function connection(ws) {
 
   ws.on('message', function incoming(message) {
     var msg = JSON.parse(message);
-    //console.log(msg.data);
+    console.log(msg.data);
     var canvas = canvases[msg.data.canvasIndex];
 
     switch (msg.action) {

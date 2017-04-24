@@ -5,30 +5,20 @@ $(document).ready(function() {
   $('#myCanvas').mousedown(function(e) {
     paint = true;
     strokes.splice(checkpoint);
-    strokes.push([]);
+    strokes.push({});
     checkpoint++;
-    mouseX = e.pageX - this.offsetLeft;
-    mouseY = e.pageY - this.offsetTop;
+    strokes[checkpoint-1].shape = shape;
+    strokes[checkpoint-1].styles = {strokeStyle: strokeStyle, lineWidth: lineWidth};
+    startX = e.pageX - this.offsetLeft;
+    startY = e.pageY - this.offsetTop;
     if (shape == 'line') {
-      strokes[strokes.length-1].push([shape, curColor, curSize]);
-      strokes[strokes.length-1].push([mouseX, mouseY]);
-      redraw();
+      strokes[checkpoint-1].nodes = [[startX, startY]];
     } else if (shape == 'rect') {
-      startX = mouseX;
-      startY = mouseY;
-      strokes[strokes.length-1].push([shape, curColor, curSize]);
-      strokes[strokes.length-1].push([startX, startY, 1, 1]);
-      redraw();
-      //context.strokeStyle = curColor;
-      //context.lineWidth = 16;
-      //context.strokeRect(startX, startY, 1, 1);
+      strokes[checkpoint-1].params = {x: startX, y: startY, width: 1, height: 1};
     } else if (shape == 'arc') {
-      startX = mouseX;
-      startY = mouseY;
-      strokes[strokes.length-1].push([shape, curColor, curSize]);
-      strokes[strokes.length-1].push([startX, startY, 1, 0, 2*Math.PI, false]);
-      redraw();
+      strokes[checkpoint-1].params = {x: startX, y: startY, radius: 1, startAngle: 0, endAngle: 2*Math.PI, anticlockwise: false};
     }
+    redraw();
   });
 
   $('#myCanvas').mousemove(function(e) {
@@ -36,13 +26,13 @@ $(document).ready(function() {
       mouseX = e.pageX - this.offsetLeft;
       mouseY = e.pageY - this.offsetTop;
       if (shape == 'line') {
-        strokes[strokes.length-1].push([mouseX, mouseY]);
+        strokes[checkpoint-1].nodes.push([mouseX, mouseY]);
       } else if (shape == 'rect') {
-        strokes[strokes.length-1][1][2] = mouseX - startX;
-        strokes[strokes.length-1][1][3] = mouseY - startY;
+        strokes[checkpoint-1].params.width = mouseX - startX;
+        strokes[checkpoint-1].params.height = mouseY - startY;
       } else if (shape == 'arc') {
         var radius = Math.sqrt(Math.pow(mouseX-startX, 2) + Math.pow(mouseY-startY, 2));
-        strokes[strokes.length-1][1][2] = radius;
+        strokes[checkpoint-1].params.radius = radius;
       }
       redraw();
     }
@@ -71,34 +61,33 @@ $(document).ready(function() {
   var colorYellow = "#ffcf33";
   var colorBrown = "#986928";
 
-  var curColor = colorPurple;
-  var curSize = 2;
+  var strokeStyle = colorPurple;
+  var lineWidth = 1;
 
   function redraw() {
     context.clearRect(0, 0, context.canvas.width, context.canvas.height); // Clears the canvas
     context.lineJoin = "round";
     for (var i = 0; i < checkpoint; i++) {
       var stroke = strokes[i];
-      context.strokeStyle = stroke[0][1];
-      context.lineWidth = stroke[0][2];
-      if (stroke[0][0] == 'line') {
-        for (var j = 1; j < stroke.length; j++) {
+      context.strokeStyle = stroke.styles.strokeStyle;
+      context.lineWidth = stroke.styles.lineWidth;
+      if (stroke.shape == 'line') {
+        for (var j = 1; j < stroke.nodes.length; j++) {
           context.beginPath();
           if (j === 1) {
-            context.moveTo(stroke[j][0] - 1, stroke[j][1] - 1);
+            context.moveTo(stroke.nodes[j][0] - 1, stroke.nodes[j][1] - 1);
           } else {
-            context.moveTo(stroke[j-1][0], stroke[j-1][1]);
+            context.moveTo(stroke.nodes[j-1][0], stroke.nodes[j-1][1]);
           }
-          context.lineTo(stroke[j][0], stroke[j][1]);
+          context.lineTo(stroke.nodes[j][0], stroke.nodes[j][1]);
           context.closePath();
           context.stroke();
         }
-      }  else if (stroke[0][0] == 'rect') {
-        context.strokeRect(stroke[1][0], stroke[1][1], stroke[1][2], stroke[1][3]);
-      }  else if (stroke[0][0] == 'arc') {
-        context.moveTo(mouseX, mouseY);
+      }  else if (stroke.shape == 'rect') {
+        context.strokeRect(stroke.params.x, stroke.params.y, stroke.params.width, stroke.params.height);
+      }  else if (stroke.shape == 'arc') {
         context.beginPath();
-        context.arc(stroke[1][0], stroke[1][1], stroke[1][2], stroke[1][3], stroke[1][4], stroke[1][5]);
+        context.arc(stroke.params.x, stroke.params.y, stroke.params.radius, stroke.params.startAngle, stroke.params.endAngle, stroke.params.anticlockwise);
         context.closePath();
         context.stroke();
       }
@@ -123,32 +112,6 @@ $(document).ready(function() {
     }
   });
 
-  $('#purple').mousedown(function(e) {
-    curColor = colorPurple;
-  });
-  $('#green').mousedown(function(e) {
-    curColor = colorGreen;
-  });
-  $('#yellow').mousedown(function(e) {
-    curColor = colorYellow;
-  });
-  $('#brown').mousedown(function(e) {
-    curColor = colorBrown;
-  });
-
-  $('#smallSize').mousedown(function(e) {
-    curSize = 2;
-  });
-  $('#normalSize').mousedown(function(e) {
-    curSize = 4;
-  });
-  $('#largeSize').mousedown(function(e) {
-    curSize = 8;
-  });
-  $('#hugeSize').mousedown(function(e) {
-    curSize = 16;
-  });
-
   $('#line').mousedown(function(e){
     shape = 'line';
   });
@@ -158,6 +121,28 @@ $(document).ready(function() {
   $('#arc').mousedown(function(e){
     shape = 'arc';
   });
+
+  $('#purple').mousedown(function(e) {
+    strokeStyle = colorPurple;
+  });
+  $('#green').mousedown(function(e) {
+    strokeStyle = colorGreen;
+  });
+  $('#yellow').mousedown(function(e) {
+    strokeStyle = colorYellow;
+  });
+  $('#brown').mousedown(function(e) {
+    strokeStyle = colorBrown;
+  });
+
+  $('#lineWidth').mousemove(function(e) {
+    $('#rangeValue').val($('#lineWidth').val());
+  });
+  $('#lineWidth').mouseup(function(e) {
+    lineWidth = Number($('#lineWidth').val());
+  });
+
+  // websocket
 
   var wsUri = "ws://niceshow.org:4080/";
   var events = {
@@ -236,7 +221,7 @@ $(document).ready(function() {
 
   function doSend(message)
   {
-    console.log("SENT: " + message);
+    //console.log("SENT: " + message);
     websocket.send(message);
   }
 
