@@ -2,12 +2,38 @@
   border: 1px solid white;
 }
 
-input[type='range']::-moz-range-thumb {
-  color: rgb)(255, 0, 0);
-  cursor: pointer;
+#red {
+  width: 64px;
+  background-color: red;
+}
+#orange {
+  width: 64px;
+  background-color: orange;
+}
+#yellow {
+  width: 64px;
+  background-color: yellow;
+}
+#green {
+  width: 64px;
+  background-color: green;
+}
+#cyan {
+  width: 64px;
+  background-color: cyan;
+}
+#blue {
+  width: 64px;
+  background-color: blue;
+}
+#purple {
+  width: 64px;
+  background-color: purple;
 }
 
+input[type='range']::-moz-range-thumb {
+  cursor: pointer;
+}
 input[type='range']::-webkit-slider-thumb {
-  color: rgb)(255, 0, 0);
   cursor: pointer;
 }

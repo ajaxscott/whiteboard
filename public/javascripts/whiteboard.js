@@ -56,15 +56,7 @@ $(document).ready(function() {
   var strokes = [];
   var startX, startY, mouseX, mouseY;
 
-  var colorRed = "red";
-  var colorOrange = "orange";
-  var colorYellow = "yellow";
-  var colorGreen = "green";
-  var colorCyan = "cyan";
-  var colorBlue = "blue";
-  var colorPurple = "purple";
-
-  var strokeStyle = colorCyan;
+  var strokeStyle = "cyan";
   var lineWidth = 1;
 
   function redraw() {
@@ -97,8 +89,14 @@ $(document).ready(function() {
     }
   }
 
+  $('#canvasIndex').change(function() {
+    $(this).val($(this).val().match(/\d+/));
+  });
   $('#canvasIndexSubmit').mousedown(function(e) {
-    doSend(makeMessage(events.outgoing.ADD_STROKE, {canvasIndex: 0, stroke: strokes[strokes.length-1]}));
+    $('#canvasIndex').val($('#canvasIndex').val().match(/\d+/));
+    if ($('#canvasIndex').val()) {
+      doSend(makeMessage(events.outgoing.SYNC_CANVAS, {canvasIndex: parseInt($('#canvasIndex').val())}));
+    }
   });
 
   /*$('#clearCanvas').mousedown(function(e) {
@@ -130,25 +128,25 @@ $(document).ready(function() {
   });
 
   $('#red').mousedown(function(e) {
-    strokeStyle = colorRed;
+    strokeStyle = 'red';
   });
   $('#orange').mousedown(function(e) {
-    strokeStyle = colorOrange;
+    strokeStyle = 'orange';
   });
   $('#yellow').mousedown(function(e) {
-    strokeStyle = colorYellow;
+    strokeStyle = 'yellow';
   });
   $('#green').mousedown(function(e) {
-    strokeStyle = colorGreen;
+    strokeStyle = 'green';
   });
   $('#cyan').mousedown(function(e) {
-    strokeStyle = colorCyan;
+    strokeStyle = 'cyan';
   });
   $('#blue').mousedown(function(e) {
-    strokeStyle = colorBlue;
+    strokeStyle = 'blue';
   });
   $('#purple').mousedown(function(e) {
-    strokeStyle = colorPurple;
+    strokeStyle = 'purple';
   });
 
   $('#lineWidth').mousemove(function(e) {
@@ -156,6 +154,14 @@ $(document).ready(function() {
   });
   $('#lineWidth').mouseup(function(e) {
     lineWidth = Number($('#lineWidth').val());
+  });
+  $('#rangeValue').change(function() {
+    $(this).val($(this).val().match(/\d+/));
+    if ($(this).val() > 32) {
+      $(this).val(32);
+    }
+    $('#lineWidth').val($(this).val());
+    lineWidth = $('#lineWidth').val();
   });
 
   // websocket
@@ -205,7 +211,7 @@ $(document).ready(function() {
     var msg = JSON.parse(evt.data);
     switch (msg.action) {
       case events.incoming.SYNC_CANVAS:
-        if (msg.data.canvas.strokes.length === 0) {
+        if (!msg.data.canvas) {
           break;
         }
         strokes = msg.data.canvas.strokes;

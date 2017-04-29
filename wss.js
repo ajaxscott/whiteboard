@@ -52,17 +52,6 @@ wss.on('connection', function connection(ws) {
 
   console.log('wss.clients.size: ' + wss.clients.size);
 
-  MongoClient.connect(url, function(err, db) {
-    assert.equal(null, err);
-
-    var col = db.collection('canvases');
-    col.findOne({index: 0}, function(err, doc) {
-      assert.equal(null, err);
-
-      ws.send(makeMessage(events.outgoing.SYNC_CANVAS, {canvas: doc}));
-      db.close();
-    });
-  });
 
   ws.on('close', function(msg) {
     console.log('wss.clients.size: ' + wss.clients.size);
@@ -73,32 +62,45 @@ wss.on('connection', function connection(ws) {
     console.log(msg.data);
 
     switch (msg.action) {
+      case events.incoming.SYNC_CANVAS:
+        var index = msg.data.canvasIndex;
+        if (index != parseInt(index, 10) || index < 0) {
+          break;
+        }
+	MongoClient.connect(url, function(err, db) {
+	  assert.equal(null, err);
+	  db.collection('canvases').findOne({index: index}, function(err, doc) {
+	    assert.equal(null, err);
+	    ws.send(makeMessage(events.outgoing.SYNC_CANVAS, {canvas: doc}));
+	    db.close();
+	  });
+	});
+        break;
       case events.incoming.ADD_STROKE:
         MongoClient.connect(url, function(err, db) {
           assert.equal(null, err);
-
           db.collection('canvases').findOne({ index: 0 }, function(err, r) {
-            if (r) {
-              checkpoint = r.checkpoint;
-              console.log(checkpoint);
-              db.collection('canvases').findOneAndUpdate(
-                { index: 0 },
-                {
-                  $push: {
-                    strokes: {
-                      $each: [msg.data.stroke],
-                      $position: checkpoint,
-                      $slice: checkpoint + 1
-                    }
-                  },
-                  $inc: { checkpoint: 1 }
-                },
-                {},
-                function(err, r) {
-                  assert.equal(null, err);
-                  db.close();
-              });
+            if (!r) {
+              return;
             }
+            checkpoint = r.checkpoint;
+            db.collection('canvases').findOneAndUpdate(
+              { index: 0 },
+              {
+                $push: {
+                  strokes: {
+                    $each: [msg.data.stroke],
+                    $position: checkpoint,
+                    $slice: checkpoint + 1
+                  }
+                },
+                $inc: { checkpoint: 1 }
+              },
+              {},
+              function(err, r) {
+                assert.equal(null, err);
+                db.close();
+            });
           });
         });
         wss.clients.forEach(function each(client) {

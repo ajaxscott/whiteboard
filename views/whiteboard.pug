@@ -5,7 +5,7 @@ block links
 
 block content
   span Choose canvas:&nbsp;
-  input(id='canvasIndex', type='text', name='canvasIndex')
+  input(id='canvasIndex', type='text', maxlength='10', name='canvasIndex')
   input(id='canvasIndexSubmit', type='submit', value='Submit')
   br
   canvas(id='myCanvas', width=512, height=512)
@@ -32,7 +32,7 @@ block content
   br
   span Choose a lineWidth:&nbsp;
   input(id='lineWidth', type='range', name='lineWidth', min='1', max='32', value='1')
-  input(id='rangeValue', type='text', value='1')
+  input(id='rangeValue', type='text', maxlength='2' value='1')
   script(
     src="https://code.jquery.com/jquery-3.2.1.slim.min.js"
     integrity="sha256-k2WSCIexGzOj3Euiig+TlR8gA0EmPjuc79OEeY5L45g="
