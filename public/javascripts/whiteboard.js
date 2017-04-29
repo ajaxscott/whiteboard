@@ -56,12 +56,15 @@ $(document).ready(function() {
   var strokes = [];
   var startX, startY, mouseX, mouseY;
 
-  var colorPurple = "#cb3594";
-  var colorGreen = "#659b41";
-  var colorYellow = "#ffcf33";
-  var colorBrown = "#986928";
+  var colorRed = "red";
+  var colorOrange = "orange";
+  var colorYellow = "yellow";
+  var colorGreen = "green";
+  var colorCyan = "cyan";
+  var colorBlue = "blue";
+  var colorPurple = "purple";
 
-  var strokeStyle = colorPurple;
+  var strokeStyle = colorCyan;
   var lineWidth = 1;
 
   function redraw() {
@@ -94,6 +97,10 @@ $(document).ready(function() {
     }
   }
 
+  $('#canvasIndexSubmit').mousedown(function(e) {
+    doSend(makeMessage(events.outgoing.ADD_STROKE, {canvasIndex: 0, stroke: strokes[strokes.length-1]}));
+  });
+
   /*$('#clearCanvas').mousedown(function(e) {
     context.clearRect(0, 0, context.canvas.width, context.canvas.height);
   });*/
@@ -122,17 +129,26 @@ $(document).ready(function() {
     shape = 'arc';
   });
 
-  $('#purple').mousedown(function(e) {
-    strokeStyle = colorPurple;
+  $('#red').mousedown(function(e) {
+    strokeStyle = colorRed;
   });
-  $('#green').mousedown(function(e) {
-    strokeStyle = colorGreen;
+  $('#orange').mousedown(function(e) {
+    strokeStyle = colorOrange;
   });
   $('#yellow').mousedown(function(e) {
     strokeStyle = colorYellow;
   });
-  $('#brown').mousedown(function(e) {
-    strokeStyle = colorBrown;
+  $('#green').mousedown(function(e) {
+    strokeStyle = colorGreen;
+  });
+  $('#cyan').mousedown(function(e) {
+    strokeStyle = colorCyan;
+  });
+  $('#blue').mousedown(function(e) {
+    strokeStyle = colorBlue;
+  });
+  $('#purple').mousedown(function(e) {
+    strokeStyle = colorPurple;
   });
 
   $('#lineWidth').mousemove(function(e) {
@@ -221,7 +237,6 @@ $(document).ready(function() {
 
   function doSend(message)
   {
-    //console.log("SENT: " + message);
     websocket.send(message);
   }
 

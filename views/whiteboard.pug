@@ -4,6 +4,10 @@ block links
   link(rel='stylesheet', href='/stylesheets/whiteboard.css')
 
 block content
+  span Choose canvas:&nbsp;
+  input(id='canvasIndex', type='text', name='canvasIndex')
+  input(id='canvasIndexSubmit', type='submit', value='Submit')
+  br
   canvas(id='myCanvas', width=512, height=512)
     Your browser does not support the HTML5 canvas tag.
   br
@@ -18,10 +22,13 @@ block content
   button(id='arc') Arc
   br
   span Choose a strokeStyle:&nbsp;
-  button(id='purple') Purple
-  button(id='green') Green
+  button(id='red') Red
+  button(id='orange') Orange
   button(id='yellow') Yellow
-  button(id='brown') Brown
+  button(id='green') Green
+  button(id='cyan') Cyan
+  button(id='blue') Blue
+  button(id='purple') Purple
   br
   span Choose a lineWidth:&nbsp;
   input(id='lineWidth', type='range', name='lineWidth', min='1', max='32', value='1')
