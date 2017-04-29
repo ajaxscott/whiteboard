@@ -12,7 +12,7 @@ $(document).ready(function() {
     startX = e.pageX - this.offsetLeft;
     startY = e.pageY - this.offsetTop;
     if (shape == 'line') {
-      strokes[checkpoint-1].nodes = [[startX, startY]];
+      strokes[checkpoint-1].params = [[startX, startY]];
     } else if (shape == 'rect') {
       strokes[checkpoint-1].params = {x: startX, y: startY, width: 1, height: 1};
     } else if (shape == 'arc') {
@@ -26,7 +26,7 @@ $(document).ready(function() {
       mouseX = e.pageX - this.offsetLeft;
       mouseY = e.pageY - this.offsetTop;
       if (shape == 'line') {
-        strokes[checkpoint-1].nodes.push([mouseX, mouseY]);
+        strokes[checkpoint-1].params.push([mouseX, mouseY]);
       } else if (shape == 'rect') {
         strokes[checkpoint-1].params.width = mouseX - startX;
         strokes[checkpoint-1].params.height = mouseY - startY;
@@ -72,14 +72,14 @@ $(document).ready(function() {
       context.strokeStyle = stroke.styles.strokeStyle;
       context.lineWidth = stroke.styles.lineWidth;
       if (stroke.shape == 'line') {
-        for (var j = 1; j < stroke.nodes.length; j++) {
+        for (var j = 1; j < stroke.params.length; j++) {
           context.beginPath();
           if (j === 1) {
-            context.moveTo(stroke.nodes[j][0] - 1, stroke.nodes[j][1] - 1);
+            context.moveTo(stroke.params[j][0] - 1, stroke.params[j][1] - 1);
           } else {
-            context.moveTo(stroke.nodes[j-1][0], stroke.nodes[j-1][1]);
+            context.moveTo(stroke.params[j-1][0], stroke.params[j-1][1]);
           }
-          context.lineTo(stroke.nodes[j][0], stroke.nodes[j][1]);
+          context.lineTo(stroke.params[j][0], stroke.params[j][1]);
           context.closePath();
           context.stroke();
         }

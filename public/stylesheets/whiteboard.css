@@ -1,3 +1,13 @@
 #myCanvas {
   border: 1px solid white;
 }
+
+input[type='range']::-moz-range-thumb {
+  color: rgb)(255, 0, 0);
+  cursor: pointer;
+}
+
+input[type='range']::-webkit-slider-thumb {
+  color: rgb)(255, 0, 0);
+  cursor: pointer;
+}

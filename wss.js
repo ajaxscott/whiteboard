@@ -19,8 +19,24 @@ var events = {
     REDO: 'scRedo'
   }   
 }
-var canvases = [];
-canvases.push(new Canvas(0));
+
+var MongoClient = require('mongodb').MongoClient, assert = require('assert');
+var url = 'mongodb://localhost:27017/whiteboard';
+
+MongoClient.connect(url, function(err, db) {
+  assert.equal(null, err);
+
+  var col = db.collection('canvases');
+  col.findOne({ index: 0 }, function(err, r) {
+    if(!r) {
+      col.insertOne(new Canvas(0), function(err, r) {
+        assert.equal(null, err);
+        assert.equal(1, r.insertedCount);
+      });
+    }
+    db.close();
+  });
+});
 
 function makeMessage (action, data) {
   var msg = {
@@ -36,7 +52,17 @@ wss.on('connection', function connection(ws) {
 
   console.log('wss.clients.size: ' + wss.clients.size);
 
-  ws.send(makeMessage(events.outgoing.SYNC_CANVAS, {canvas: canvases[0]}));
+  MongoClient.connect(url, function(err, db) {
+    assert.equal(null, err);
+
+    var col = db.collection('canvases');
+    col.findOne({index: 0}, function(err, doc) {
+      assert.equal(null, err);
+
+      ws.send(makeMessage(events.outgoing.SYNC_CANVAS, {canvas: doc}));
+      db.close();
+    });
+  });
 
   ws.on('close', function(msg) {
     console.log('wss.clients.size: ' + wss.clients.size);
@@ -45,15 +71,36 @@ wss.on('connection', function connection(ws) {
   ws.on('message', function incoming(message) {
     var msg = JSON.parse(message);
     console.log(msg.data);
-    var canvas = canvases[msg.data.canvasIndex];
 
     switch (msg.action) {
       case events.incoming.ADD_STROKE:
-        canvas.strokes.splice(canvas.checkpoint);
-        canvas.strokes.push(msg.data.stroke);
-        canvas.checkpoint = canvas.strokes.length;
-        console.log('canvas.strokes.length: ' + canvas.strokes.length);
-        console.log('canvas.checkpoint: ' + canvas.checkpoint);
+        MongoClient.connect(url, function(err, db) {
+          assert.equal(null, err);
+
+          db.collection('canvases').findOne({ index: 0 }, function(err, r) {
+            if (r) {
+              checkpoint = r.checkpoint;
+              console.log(checkpoint);
+              db.collection('canvases').findOneAndUpdate(
+                { index: 0 },
+                {
+                  $push: {
+                    strokes: {
+                      $each: [msg.data.stroke],
+                      $position: checkpoint,
+                      $slice: checkpoint + 1
+                    }
+                  },
+                  $inc: { checkpoint: 1 }
+                },
+                {},
+                function(err, r) {
+                  assert.equal(null, err);
+                  db.close();
+              });
+            }
+          });
+        });
         wss.clients.forEach(function each(client) {
           if (client !== ws && client.readyState == WebSocket.OPEN) {
             client.send(makeMessage(events.outgoing.ADD_STROKE, {stroke: msg.data.stroke}));
@@ -61,28 +108,46 @@ wss.on('connection', function connection(ws) {
         });
         break;
       case events.incoming.UNDO:
-        if (canvas.checkpoint) {
-          canvas.checkpoint--;
-          console.log('canvas.strokes.length: ' + canvas.strokes.length);
-          console.log('canvas.checkpoint: ' + canvas.checkpoint);
-          wss.clients.forEach(function each(client) {
-            if (client !== ws && client.readyState == WebSocket.OPEN) {
-              client.send(makeMessage(events.outgoing.UNDO, {}));
-            }
+        MongoClient.connect(url, function(err, db) {
+          assert.equal(null, err);
+
+          db.collection('canvases').findOneAndUpdate(
+            { index: 0 , checkpoint: { $gt: 0 } },
+            {
+              $inc: { checkpoint: -1 }
+            },
+            {},
+            function(err, r) {
+              assert.equal(null, err);
+              db.close();
           });
-        }
+        });
+        wss.clients.forEach(function each(client) {
+          if (client !== ws && client.readyState == WebSocket.OPEN) {
+            client.send(makeMessage(events.outgoing.UNDO, {}));
+          }
+        });
         break;
       case events.incoming.REDO:
-        if (canvas.checkpoint < canvas.strokes.length) {
-          canvas.checkpoint++;
-          console.log('canvas.strokes.length: ' + canvas.strokes.length);
-          console.log('canvas.checkpoint: ' + canvas.checkpoint);
-          wss.clients.forEach(function each(client) {
-            if (client !== ws && client.readyState == WebSocket.OPEN) {
-              client.send(makeMessage(events.outgoing.REDO, {}));
-            }
+        MongoClient.connect(url, function(err, db) {
+          assert.equal(null, err);
+
+          db.collection('canvases').findOneAndUpdate(
+            { index: 0 , $where: function() { return this.checkpoint < this.strokes.length } },
+            {
+              $inc: { checkpoint: 1 }
+            },
+            {},
+            function(err, r) {
+              assert.equal(null, err);
+              db.close();
           });
-        }
+        });
+	wss.clients.forEach(function each(client) {
+	  if (client !== ws && client.readyState == WebSocket.OPEN) {
+	    client.send(makeMessage(events.outgoing.REDO, {}));
+	  }
+	});
         break;
     }
   });
