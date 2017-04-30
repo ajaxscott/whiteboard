@@ -1,6 +1,3 @@
-var EventEmitter = require('events').EventEmitter;
-var util = require('util');
-
 var Canvas = function(canvasIndex) {
   this.index = canvasIndex;
   this.strokes = [];
