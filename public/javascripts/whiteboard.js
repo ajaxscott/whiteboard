@@ -11,11 +11,11 @@ $(document).ready(function() {
     strokes[checkpoint-1].styles = {strokeStyle: strokeStyle, lineWidth: lineWidth};
     startX = e.pageX - this.offsetLeft;
     startY = e.pageY - this.offsetTop;
-    if (shape == 'line') {
-      strokes[checkpoint-1].params = [[startX, startY]];
-    } else if (shape == 'rect') {
+    if (shape === 'free' || shape === 'line') {
+      strokes[checkpoint-1].params = [[startX, startY], [startX, startY]];
+    } else if (shape === 'rect') {
       strokes[checkpoint-1].params = {x: startX, y: startY, width: 1, height: 1};
-    } else if (shape == 'arc') {
+    } else if (shape === 'arc') {
       strokes[checkpoint-1].params = {x: startX, y: startY, radius: 1, startAngle: 0, endAngle: 2*Math.PI, anticlockwise: false};
     }
     redraw();
@@ -25,8 +25,11 @@ $(document).ready(function() {
     if (paint) {
       mouseX = e.pageX - this.offsetLeft;
       mouseY = e.pageY - this.offsetTop;
-      if (shape == 'line') {
+      if (shape == 'free') {
         strokes[checkpoint-1].params.push([mouseX, mouseY]);
+      } else if (shape == 'line') {
+        strokes[checkpoint-1].params[1][0] = mouseX;
+        strokes[checkpoint-1].params[1][1] = mouseY;
       } else if (shape == 'rect') {
         strokes[checkpoint-1].params.width = mouseX - startX;
         strokes[checkpoint-1].params.height = mouseY - startY;
@@ -50,7 +53,7 @@ $(document).ready(function() {
     paint = false;
   });
 
-  var shape = 'line';
+  var shape = 'free';
   var paint = false;
   var checkpoint = 0;
   var strokes = [];
@@ -66,21 +69,23 @@ $(document).ready(function() {
       var stroke = strokes[i];
       context.strokeStyle = stroke.styles.strokeStyle;
       context.lineWidth = stroke.styles.lineWidth;
-      if (stroke.shape == 'line') {
+      if (stroke.shape == 'free') {
         for (var j = 1; j < stroke.params.length; j++) {
           context.beginPath();
-          if (j === 1) {
-            context.moveTo(stroke.params[j][0] - 1, stroke.params[j][1] - 1);
-          } else {
-            context.moveTo(stroke.params[j-1][0], stroke.params[j-1][1]);
-          }
+          context.moveTo(stroke.params[j-1][0], stroke.params[j-1][1]);
           context.lineTo(stroke.params[j][0], stroke.params[j][1]);
           context.closePath();
           context.stroke();
         }
-      }  else if (stroke.shape == 'rect') {
+      } else if (stroke.shape == 'line') {
+	context.beginPath();
+	context.moveTo(stroke.params[0][0], stroke.params[0][1]);
+	context.lineTo(stroke.params[1][0], stroke.params[1][1]);
+	context.closePath();
+	context.stroke();
+      } else if (stroke.shape == 'rect') {
         context.strokeRect(stroke.params.x, stroke.params.y, stroke.params.width, stroke.params.height);
-      }  else if (stroke.shape == 'arc') {
+      } else if (stroke.shape == 'arc') {
         context.beginPath();
         context.arc(stroke.params.x, stroke.params.y, stroke.params.radius, stroke.params.startAngle, stroke.params.endAngle, stroke.params.anticlockwise);
         context.closePath();
@@ -117,6 +122,9 @@ $(document).ready(function() {
     }
   });
 
+  $('#free').mousedown(function(e){
+    shape = 'free';
+  });
   $('#line').mousedown(function(e){
     shape = 'line';
   });
