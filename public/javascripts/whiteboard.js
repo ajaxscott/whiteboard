@@ -105,23 +105,22 @@ $(document).ready(function() {
     }
   }
 
-  $('#canvasIndex').keypress(function(e) {
-    var key = e.which;
-    if (key === 13) // the enter key code
-    {
-      var index = parseInt($('#canvasIndex').val())
-      if (!isNaN(index)) {
-        canvasIndex = index;
-        doSend(makeMessage(events.outgoing.SYNC_CANVAS, {canvasIndex: canvasIndex}));
-      }
-    }
-  });
-  $('#canvasIndexSubmit').mouseup(function(e) {
+  function syncCanvas() {
     var index = parseInt($('#canvasIndex').val())
     if (!isNaN(index)) {
       canvasIndex = index;
       doSend(makeMessage(events.outgoing.SYNC_CANVAS, {canvasIndex: canvasIndex}));
     }
+  }
+  $('#canvasIndex').keypress(function(e) {
+    var key = e.which;
+    if (key === 13) // the enter key code
+    {
+      syncCanvas();
+    }
+  });
+  $('#canvasIndexSubmit').mouseup(function(e) {
+    syncCanvas();
   });
 
   /*$('#clearCanvas').mousedown(function(e) {
@@ -222,9 +221,13 @@ $(document).ready(function() {
         redraw();
         if (checkpoint > 0) {
           $('#undo').attr('disabled', false);
+        } else {
+          $('#undo').attr('disabled', true);
         }
         if (checkpoint < strokes.length) {
           $('#redo').attr('disabled', false);
+        } else {
+          $('#redo').attr('disabled', true);
         }
         break;
       case events.incoming.ADD_STROKE:
