@@ -43,15 +43,17 @@ $(document).ready(function() {
 
   $('#myCanvas').mouseup(function(e) {
     paint = false;
-    doSend(makeMessage(events.outgoing.ADD_STROKE, {canvasIndex: 0, stroke: strokes[strokes.length-1]}));
+    doSend(makeMessage(events.outgoing.ADD_STROKE, {canvasIndex: canvasIndex, stroke: strokes[strokes.length-1]}));
   });
 
   $('#myCanvas').mouseleave(function(e) {
     if (paint === true) {
-      doSend(makeMessage(events.outgoing.ADD_STROKE, {canvasIndex: 0, stroke: strokes[strokes.length-1]}));
+      doSend(makeMessage(events.outgoing.ADD_STROKE, {canvasIndex: canvasIndex, stroke: strokes[strokes.length-1]}));
     }
     paint = false;
   });
+
+  var canvasIndex = 0
 
   var shape = 'free';
   var paint = false;
@@ -94,13 +96,11 @@ $(document).ready(function() {
     }
   }
 
-  $('#canvasIndex').change(function() {
-    $(this).val($(this).val().match(/\d+/));
-  });
-  $('#canvasIndexSubmit').mousedown(function(e) {
-    $('#canvasIndex').val($('#canvasIndex').val().match(/\d+/));
-    if ($('#canvasIndex').val()) {
-      doSend(makeMessage(events.outgoing.SYNC_CANVAS, {canvasIndex: parseInt($('#canvasIndex').val())}));
+  $('#canvasIndexSubmit').mouseup(function(e) {
+    var index = parseInt($('#canvasIndex').val())
+    if (!isNaN(index)) {
+      canvasIndex = index;
+      doSend(makeMessage(events.outgoing.SYNC_CANVAS, {canvasIndex: canvasIndex}));
     }
   });
 
@@ -111,14 +111,14 @@ $(document).ready(function() {
     if (checkpoint) {
       checkpoint--;
       redraw();
-      doSend(makeMessage(events.outgoing.UNDO, {canvasIndex: 0}));
+      doSend(makeMessage(events.outgoing.UNDO, {canvasIndex: canvasIndex}));
     }
   });
   $('#redo').mousedown(function(e) {
     if (checkpoint < strokes.length) {
       checkpoint++;
       redraw();
-      doSend(makeMessage(events.outgoing.REDO, {canvasIndex: 0}));
+      doSend(makeMessage(events.outgoing.REDO, {canvasIndex: canvasIndex}));
     }
   });
 
@@ -157,19 +157,15 @@ $(document).ready(function() {
     strokeStyle = 'purple';
   });
 
-  $('#lineWidth').mousemove(function(e) {
+  $('#lineWidth').on('mousemove mouseup', function(e) {
     $('#rangeValue').val($('#lineWidth').val());
-  });
-  $('#lineWidth').mouseup(function(e) {
     lineWidth = Number($('#lineWidth').val());
   });
-  $('#rangeValue').change(function() {
-    $(this).val($(this).val().match(/\d+/));
-    if ($(this).val() > 32) {
-      $(this).val(32);
+  $('#rangeValue').on('keyup mouseup', function() {
+    if ($(this).val()) {
+      $('#lineWidth').val($(this).val());
+      lineWidth = $('#lineWidth').val();
     }
-    $('#lineWidth').val($(this).val());
-    lineWidth = $('#lineWidth').val();
   });
 
   // websocket
@@ -217,9 +213,8 @@ $(document).ready(function() {
     var msg = JSON.parse(evt.data);
     switch (msg.action) {
       case events.incoming.SYNC_CANVAS:
-        if (!msg.data.canvas) {
-          break;
-        }
+        context.clearRect(0, 0, context.canvas.width, context.canvas.height);
+        canvasIndex = msg.data.canvas.index;
         strokes = msg.data.canvas.strokes;
         checkpoint = msg.data.canvas.checkpoint;
         redraw();

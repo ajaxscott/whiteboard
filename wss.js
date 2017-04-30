@@ -63,34 +63,40 @@ wss.on('connection', function connection(ws) {
   ws.on('message', function incoming(message) {
     var msg = JSON.parse(message);
     console.log(msg);
-
+    var index = msg.data.canvasIndex;
+    if (index != parseInt(index, 10) || index < 0 || index > 4294967295) {
+      return;
+    }
     switch (msg.action) {
       case events.incoming.SYNC_CANVAS:
-        var index = msg.data.canvasIndex;
-        if (index != parseInt(index, 10) || index < 0) {
-          break;
-        }
 	MongoClient.connect(url, function(err, db) {
 	  assert.equal(null, err);
 	  db.collection('canvases').findOne({index: index}, function(err, doc) {
 	    assert.equal(null, err);
-	    ws.send(makeMessage(events.outgoing.SYNC_CANVAS, {canvas: doc}));
-	    db.close();
+            if (!doc) {
+	      db.collection('canvases').insertOne(new Canvas(index), function(err, r) {
+		assert.equal(null, err);
+		assert.equal(1, r.insertedCount);
+		ws.send(makeMessage(events.outgoing.SYNC_CANVAS, {canvas: new Canvas(index)}));
+		db.close();
+	      });
+            } else {
+              ws.send(makeMessage(events.outgoing.SYNC_CANVAS, {canvas: doc}));
+            }
 	  });
 	});
         break;
       case events.incoming.ADD_STROKE:
         MongoClient.connect(url, function(err, db) {
           assert.equal(null, err);
-          db.collection('canvases').findOne({ index: 0 }, function(err, r) {
-            if (!r) {
+          db.collection('canvases').findOne({ index: index }, function(err, doc) {
+            if (!doc) {
               return;
             }
-            checkpoint = r.checkpoint;
+            checkpoint = doc.checkpoint;
             db.collection('canvases').findOneAndUpdate(
-              { index: 0 },
-              {
-                $push: {
+              { index: index },
+              { $push: {
                   strokes: {
                     $each: [msg.data.stroke],
                     $position: checkpoint,
@@ -117,7 +123,7 @@ wss.on('connection', function connection(ws) {
           assert.equal(null, err);
 
           db.collection('canvases').findOneAndUpdate(
-            { index: 0 , checkpoint: { $gt: 0 } },
+            { index: index , checkpoint: { $gt: 0 } },
             {
               $inc: { checkpoint: -1 }
             },
@@ -138,7 +144,7 @@ wss.on('connection', function connection(ws) {
           assert.equal(null, err);
 
           db.collection('canvases').findOneAndUpdate(
-            { index: 0 , $where: function() { return this.checkpoint < this.strokes.length } },
+            { index: index , $where: function() { return this.checkpoint < this.strokes.length } },
             {
               $inc: { checkpoint: 1 }
             },
