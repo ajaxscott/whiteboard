@@ -177,14 +177,12 @@ $(document).ready(function() {
   var wsUri = "ws://niceshow.org:4080/";
   var events = {
     outgoing: {
-      PLAYER_CONNECTED: 'csPlayerConnected',
       SYNC_CANVAS: 'csSyncCanvas',
       ADD_STROKE: 'csAddStroke',
       UNDO: 'csUndo',
       REDO: 'csRedo'
     },
     incoming: {
-      PLAYER_CONNECTED: 'scPlayerConnected',
       SYNC_CANVAS: 'scSyncCanvas',
       ADD_STROKE: 'scAddStroke',
       UNDO: 'scUndo',

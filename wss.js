@@ -2,17 +2,14 @@ const WebSocket = require('ws');
 const wss = new WebSocket.Server({ port: 4080 });
 
 var Canvas = require('./models/Canvas');
-var Player = require('./models/Player');
 var events = { 
   incoming: {
-    PLAYER_CONNECTED: 'csPlayerConnected',
     SYNC_CANVAS: 'csSyncCanvas',
     ADD_STROKE: 'csAddStroke',
     UNDO: 'csUndo',
     REDO: 'csRedo'
   },
   outgoing: {
-    PLAYER_CONNECTED: 'scPlayerConnected',
     SYNC_CANVAS: 'scSyncCanvas',
     ADD_STROKE: 'scAddStroke',
     UNDO: 'scUndo',
@@ -48,10 +45,16 @@ function makeMessage (action, data) {
 
 wss.on('connection', function connection(ws) {
 
-  var player = new Player();
-
   console.log('wss.clients.size: ' + wss.clients.size);
 
+  MongoClient.connect(url, function(err, db) {
+    assert.equal(null, err);
+    db.collection('canvases').findOne({index: 0}, function(err, doc) {
+      assert.equal(null, err);
+      ws.send(makeMessage(events.outgoing.SYNC_CANVAS, {canvas: doc}));
+      db.close();
+    });
+  });
 
   ws.on('close', function(msg) {
     console.log('wss.clients.size: ' + wss.clients.size);
@@ -59,7 +62,7 @@ wss.on('connection', function connection(ws) {
 
   ws.on('message', function incoming(message) {
     var msg = JSON.parse(message);
-    console.log(msg.data);
+    console.log(msg);
 
     switch (msg.action) {
       case events.incoming.SYNC_CANVAS:
