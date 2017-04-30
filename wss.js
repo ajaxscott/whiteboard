@@ -53,9 +53,9 @@ wss.on('connection', function connection(ws) {
 	      db.collection('canvases').insertOne(new Canvas(index), function(err, r) {
 		assert.equal(null, err);
 		assert.equal(1, r.insertedCount);
-		ws.send(makeMessage(events.outgoing.SYNC_CANVAS, {canvas: new Canvas(index)}));
 		db.close();
 	      });
+              ws.send(makeMessage(events.outgoing.SYNC_CANVAS, {canvas: new Canvas(index)}));
             } else {
               ws.send(makeMessage(events.outgoing.SYNC_CANVAS, {canvas: doc}));
             }

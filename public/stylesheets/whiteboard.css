@@ -2,32 +2,28 @@
   border: 1px solid white;
 }
 
-#red {
+.color {
   width: 64px;
+}
+#red {
   background-color: red;
 }
 #orange {
-  width: 64px;
   background-color: orange;
 }
 #yellow {
-  width: 64px;
   background-color: yellow;
 }
 #green {
-  width: 64px;
   background-color: green;
 }
 #cyan {
-  width: 64px;
   background-color: cyan;
 }
 #blue {
-  width: 64px;
   background-color: blue;
 }
 #purple {
-  width: 64px;
   background-color: purple;
 }
 

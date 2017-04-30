@@ -13,23 +13,23 @@ block content
   br
   span Choose an action:&nbsp;
   //button(id='clearCanvas' type='button') Clear
-  button(id='undo' type='button') Undo
-  button(id='redo' type='button') Redo
+  button(id='undo' type='button' disabled) Undo
+  button(id='redo' type='button' disabled) Redo
   br
   span Choose a shape:&nbsp;
-  button(id='free') Free
-  button(id='line') Line
-  button(id='rect') Rect
-  button(id='arc') Arc
+  button(class='shape') Free
+  button(class='shape') Line
+  button(class='shape') Rect
+  button(class='shape') Arc
   br
   span Choose a strokeStyle:&nbsp;
-  button(id='red') Red
-  button(id='orange') Orange
-  button(id='yellow') Yellow
-  button(id='green') Green
-  button(id='cyan') Cyan
-  button(id='blue') Blue
-  button(id='purple') Purple
+  button(id='red' class='color') Red
+  button(id='orange' class='color') Orange
+  button(id='yellow' class='color') Yellow
+  button(id='green' class='color') Green
+  button(id='cyan' class='color') Cyan
+  button(id='blue' class='color') Blue
+  button(id='purple' class='color') Purple
   br
   span Choose a lineWidth:&nbsp;
   input(id='lineWidth' type='range' name='lineWidth' min='1' max='32' value='1')

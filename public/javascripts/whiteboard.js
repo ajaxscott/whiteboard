@@ -43,11 +43,15 @@ $(document).ready(function() {
 
   $('#myCanvas').mouseup(function(e) {
     paint = false;
+    $('#undo').attr('disabled', false);
+    $('#redo').attr('disabled', true);
     doSend(makeMessage(events.outgoing.ADD_STROKE, {canvasIndex: canvasIndex, stroke: strokes[strokes.length-1]}));
   });
 
   $('#myCanvas').mouseleave(function(e) {
     if (paint === true) {
+      $('#undo').attr('disabled', false);
+      $('#redo').attr('disabled', true);
       doSend(makeMessage(events.outgoing.ADD_STROKE, {canvasIndex: canvasIndex, stroke: strokes[strokes.length-1]}));
     }
     paint = false;
@@ -71,31 +75,47 @@ $(document).ready(function() {
       var stroke = strokes[i];
       context.strokeStyle = stroke.styles.strokeStyle;
       context.lineWidth = stroke.styles.lineWidth;
-      if (stroke.shape == 'free') {
-        for (var j = 1; j < stroke.params.length; j++) {
+      switch (stroke.shape) {
+        case 'free':
+          for (var j = 1; j < stroke.params.length; j++) {
+            context.beginPath();
+            context.moveTo(stroke.params[j-1][0], stroke.params[j-1][1]);
+            context.lineTo(stroke.params[j][0], stroke.params[j][1]);
+            context.closePath();
+            context.stroke();
+          }
+          break;
+        case 'line':
           context.beginPath();
-          context.moveTo(stroke.params[j-1][0], stroke.params[j-1][1]);
-          context.lineTo(stroke.params[j][0], stroke.params[j][1]);
+          context.moveTo(stroke.params[0][0], stroke.params[0][1]);
+          context.lineTo(stroke.params[1][0], stroke.params[1][1]);
           context.closePath();
           context.stroke();
-        }
-      } else if (stroke.shape == 'line') {
-	context.beginPath();
-	context.moveTo(stroke.params[0][0], stroke.params[0][1]);
-	context.lineTo(stroke.params[1][0], stroke.params[1][1]);
-	context.closePath();
-	context.stroke();
-      } else if (stroke.shape == 'rect') {
-        context.strokeRect(stroke.params.x, stroke.params.y, stroke.params.width, stroke.params.height);
-      } else if (stroke.shape == 'arc') {
-        context.beginPath();
-        context.arc(stroke.params.x, stroke.params.y, stroke.params.radius, stroke.params.startAngle, stroke.params.endAngle, stroke.params.anticlockwise);
-        context.closePath();
-        context.stroke();
+          break;
+        case 'rect':
+          context.strokeRect(stroke.params.x, stroke.params.y, stroke.params.width, stroke.params.height);
+          break;
+        case 'arc':
+          context.beginPath();
+          context.arc(stroke.params.x, stroke.params.y, stroke.params.radius, stroke.params.startAngle, stroke.params.endAngle, stroke.params.anticlockwise);
+          context.closePath();
+          context.stroke();
+          break;
       }
     }
   }
 
+  $('#canvasIndex').keypress(function(e) {
+    var key = e.which;
+    if (key === 13) // the enter key code
+    {
+      var index = parseInt($('#canvasIndex').val())
+      if (!isNaN(index)) {
+        canvasIndex = index;
+        doSend(makeMessage(events.outgoing.SYNC_CANVAS, {canvasIndex: canvasIndex}));
+      }
+    }
+  });
   $('#canvasIndexSubmit').mouseup(function(e) {
     var index = parseInt($('#canvasIndex').val())
     if (!isNaN(index)) {
@@ -108,10 +128,14 @@ $(document).ready(function() {
     context.clearRect(0, 0, context.canvas.width, context.canvas.height);
   });*/
   $('#undo').mousedown(function(e) {
-    if (checkpoint) {
+    if (checkpoint > 0) {
       checkpoint--;
       redraw();
       doSend(makeMessage(events.outgoing.UNDO, {canvasIndex: canvasIndex}));
+      $('#redo').attr('disabled', false);
+      if (checkpoint === 0) {
+        $(this).attr('disabled', true);
+      }
     }
   });
   $('#redo').mousedown(function(e) {
@@ -119,42 +143,19 @@ $(document).ready(function() {
       checkpoint++;
       redraw();
       doSend(makeMessage(events.outgoing.REDO, {canvasIndex: canvasIndex}));
+      $('#undo').attr('disabled', false);
+      if (checkpoint === strokes.length) {
+        $(this).attr('disabled', true);
+      }
     }
   });
 
-  $('#free').mousedown(function(e){
-    shape = 'free';
-  });
-  $('#line').mousedown(function(e){
-    shape = 'line';
-  });
-  $('#rect').mousedown(function(e){
-    shape = 'rect';
-  });
-  $('#arc').mousedown(function(e){
-    shape = 'arc';
+  $('.shape').mousedown(function(e) {
+    shape = $(this).text().toLowerCase();
   });
 
-  $('#red').mousedown(function(e) {
-    strokeStyle = 'red';
-  });
-  $('#orange').mousedown(function(e) {
-    strokeStyle = 'orange';
-  });
-  $('#yellow').mousedown(function(e) {
-    strokeStyle = 'yellow';
-  });
-  $('#green').mousedown(function(e) {
-    strokeStyle = 'green';
-  });
-  $('#cyan').mousedown(function(e) {
-    strokeStyle = 'cyan';
-  });
-  $('#blue').mousedown(function(e) {
-    strokeStyle = 'blue';
-  });
-  $('#purple').mousedown(function(e) {
-    strokeStyle = 'purple';
+  $('.color').mousedown(function(e) {
+    strokeStyle = $(this).text().toLowerCase();
   });
 
   $('#lineWidth').on('mousemove mouseup', function(e) {
@@ -219,20 +220,36 @@ $(document).ready(function() {
         strokes = msg.data.canvas.strokes;
         checkpoint = msg.data.canvas.checkpoint;
         redraw();
+        if (checkpoint > 0) {
+          $('#undo').attr('disabled', false);
+        }
+        if (checkpoint < strokes.length) {
+          $('#redo').attr('disabled', false);
+        }
         break;
       case events.incoming.ADD_STROKE:
         strokes.splice(checkpoint);
         checkpoint++;
         strokes.push(msg.data.stroke);
         redraw();
+        $('#undo').attr('disabled', false);
+        $('#redo').attr('disabled', true);
         break;
       case events.incoming.UNDO:
         checkpoint--;
         redraw();
+        $('#redo').attr('disabled', false);
+        if (checkpoint === 0) {
+          $('#undo').attr('disabled', true);
+        }
         break;
       case events.incoming.REDO:
         checkpoint++;
         redraw();
+        $('#undo').attr('disabled', false);
+        if (checkpoint === strokes.length) {
+          $('#redo').attr('disabled', true);
+        }
         break;
     }
     //websocket.close();
