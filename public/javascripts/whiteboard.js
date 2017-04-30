@@ -200,6 +200,7 @@ $(document).ready(function() {
   function onOpen(evt)
   {
     console.log('CONNECTED');
+    doSend(makeMessage(events.outgoing.SYNC_CANVAS, {canvasIndex: canvasIndex}));
   }
 
   function onClose(evt)

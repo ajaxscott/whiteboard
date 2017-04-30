@@ -20,21 +20,6 @@ var events = {
 var MongoClient = require('mongodb').MongoClient, assert = require('assert');
 var url = 'mongodb://localhost:27017/whiteboard';
 
-MongoClient.connect(url, function(err, db) {
-  assert.equal(null, err);
-
-  var col = db.collection('canvases');
-  col.findOne({ index: 0 }, function(err, r) {
-    if(!r) {
-      col.insertOne(new Canvas(0), function(err, r) {
-        assert.equal(null, err);
-        assert.equal(1, r.insertedCount);
-      });
-    }
-    db.close();
-  });
-});
-
 function makeMessage (action, data) {
   var msg = {
     action: action,
@@ -46,15 +31,6 @@ function makeMessage (action, data) {
 wss.on('connection', function connection(ws) {
 
   console.log('wss.clients.size: ' + wss.clients.size);
-
-  MongoClient.connect(url, function(err, db) {
-    assert.equal(null, err);
-    db.collection('canvases').findOne({index: 0}, function(err, doc) {
-      assert.equal(null, err);
-      ws.send(makeMessage(events.outgoing.SYNC_CANVAS, {canvas: doc}));
-      db.close();
-    });
-  });
 
   ws.on('close', function(msg) {
     console.log('wss.clients.size: ' + wss.clients.size);
