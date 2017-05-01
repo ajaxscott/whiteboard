@@ -2,13 +2,27 @@ $(document).ready(function() {
   var canvas = document.getElementById("myCanvas");
   var context = canvas.getContext("2d");
 
+  function hexToRgb(hex) {
+    var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+    return result ? {
+      r: parseInt(result[1], 16),
+      g: parseInt(result[2], 16),
+      b: parseInt(result[3], 16)
+    } : null;
+  }
+
   $('#myCanvas').mousedown(function(e) {
     paint = true;
     strokes.splice(checkpoint);
     strokes.push({});
     checkpoint++;
     strokes[checkpoint-1].shape = shape;
-    strokes[checkpoint-1].styles = {strokeStyle: strokeStyle, lineWidth: lineWidth};
+
+    context.strokeStyle = color;
+    var rgb = hexToRgb(context.strokeStyle);
+    var rgba = 'rgba(' + rgb.r + ', ' + rgb.g + ', ' + rgb.b + ', ' + alpha + ')';
+
+    strokes[checkpoint-1].styles = {lineWidth: lineWidth, strokeStyle: rgba, fillStyle: rgba, strokeOrFill};
     startX = e.pageX - this.offsetLeft;
     startY = e.pageY - this.offsetTop;
     if (shape === 'free' || shape === 'line') {
@@ -25,15 +39,15 @@ $(document).ready(function() {
     if (paint) {
       mouseX = e.pageX - this.offsetLeft;
       mouseY = e.pageY - this.offsetTop;
-      if (shape == 'free') {
+      if (shape === 'free') {
         strokes[checkpoint-1].params.push([mouseX, mouseY]);
-      } else if (shape == 'line') {
+      } else if (shape === 'line') {
         strokes[checkpoint-1].params[1][0] = mouseX;
         strokes[checkpoint-1].params[1][1] = mouseY;
-      } else if (shape == 'rect') {
+      } else if (shape === 'rect') {
         strokes[checkpoint-1].params.width = mouseX - startX;
         strokes[checkpoint-1].params.height = mouseY - startY;
-      } else if (shape == 'arc') {
+      } else if (shape === 'arc') {
         var radius = Math.sqrt(Math.pow(mouseX-startX, 2) + Math.pow(mouseY-startY, 2));
         strokes[checkpoint-1].params.radius = radius;
       }
@@ -65,16 +79,19 @@ $(document).ready(function() {
   var strokes = [];
   var startX, startY, mouseX, mouseY;
 
-  var strokeStyle = "white";
   var lineWidth = 1;
+  var color = "white";
+  var alpha = 1;
+  var strokeOrFill = 'stroke';
 
   function redraw() {
     context.clearRect(0, 0, context.canvas.width, context.canvas.height); // Clears the canvas
     context.lineJoin = "round";
     for (var i = 0; i < checkpoint; i++) {
       var stroke = strokes[i];
-      context.strokeStyle = stroke.styles.strokeStyle;
       context.lineWidth = stroke.styles.lineWidth;
+      context.strokeStyle = stroke.styles.strokeStyle;
+      context.fillStyle = stroke.styles.fillStyle;
       switch (stroke.shape) {
         case 'free':
           for (var j = 1; j < stroke.params.length; j++) {
@@ -93,13 +110,21 @@ $(document).ready(function() {
           context.stroke();
           break;
         case 'rect':
-          context.strokeRect(stroke.params.x, stroke.params.y, stroke.params.width, stroke.params.height);
+          if (stroke.styles.strokeOrFill === 'stroke') {
+            context.strokeRect(stroke.params.x, stroke.params.y, stroke.params.width, stroke.params.height);
+          } else if (stroke.styles.strokeOrFill === 'fill') {
+            context.fillRect(stroke.params.x, stroke.params.y, stroke.params.width, stroke.params.height);
+          }
           break;
         case 'arc':
           context.beginPath();
           context.arc(stroke.params.x, stroke.params.y, stroke.params.radius, stroke.params.startAngle, stroke.params.endAngle, stroke.params.anticlockwise);
           context.closePath();
-          context.stroke();
+          if (stroke.styles.strokeOrFill === 'stroke') {
+            context.stroke();
+          } else if (stroke.styles.strokeOrFill === 'fill') {
+            context.fill();
+          }
           break;
       }
     }
@@ -149,22 +174,37 @@ $(document).ready(function() {
     }
   });
 
+  $('#line-width-range').on('mousemove mouseup', function(e) {
+    $('#line-width-number').val($(this).val());
+    lineWidth = Number($(this).val());
+  });
+  $('#line-width-number').on('keyup mouseup', function() {
+    if ($(this).val()) {
+      $('#line-width-range').val($(this).val());
+      lineWidth = $('#line-width-range').val();
+    }
+  });
+
   $('.shape').mousedown(function(e) {
     shape = $(this).text().toLowerCase();
   });
 
-  $('.color').mousedown(function(e) {
-    strokeStyle = $(this).text().toLowerCase();
+  $('.strokeOrFill').mousedown(function(e) {
+    strokeOrFill = $(this).text().toLowerCase();
   });
 
-  $('#lineWidth').on('mousemove mouseup', function(e) {
-    $('#rangeValue').val($('#lineWidth').val());
-    lineWidth = Number($('#lineWidth').val());
+  $('.color').mousedown(function(e) {
+    color = $(this).text().toLowerCase();
   });
-  $('#rangeValue').on('keyup mouseup', function() {
+
+  $('#alpha-range').on('mousemove mouseup', function(e) {
+    $('#alpha-number').val($(this).val());
+    alpha = Number($(this).val());
+  });
+  $('#alpha-number').on('keyup mouseup', function() {
     if ($(this).val()) {
-      $('#lineWidth').val($(this).val());
-      lineWidth = $('#lineWidth').val();
+      $('#alpha-range').val($(this).val());
+      alpha = $('#alpha-range').val();
     }
   });
 

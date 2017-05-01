@@ -16,13 +16,21 @@ block content
   button(id='undo' type='button' disabled) Undo
   button(id='redo' type='button' disabled) Redo
   br
-  span Choose a shape:&nbsp;
+  span lineWidth:&nbsp;
+  input(id='line-width-range' type='range'  min='1' max='32' value='1')
+  input(id='line-width-number' type='number' min='1' max='32' value='1')
+  br
+  span shape:&nbsp;
   button(class='shape') Free
   button(class='shape') Line
   button(class='shape') Rect
   button(class='shape') Arc
   br
-  span Choose a strokeStyle:&nbsp;
+  button(class='strokeOrFill') stroke
+  span or
+  button(class='strokeOrFill') fill
+  br
+  span color:&nbsp;
   button(id='white' class='color') White
   button(id='red' class='color') Red
   button(id='orange' class='color') Orange
@@ -32,9 +40,9 @@ block content
   button(id='blue' class='color') Blue
   button(id='purple' class='color') Purple
   br
-  span Choose a lineWidth:&nbsp;
-  input(id='lineWidth' type='range' name='lineWidth' min='1' max='32' value='1')
-  input(id='rangeValue' type='number' min='1' max='32' value='1')
+  span alpha:&nbsp;
+  input(id='alpha-range' type='range'  min='0' max='1' step='0.01' value='1')
+  input(id='alpha-number' type='number' min='0' max='1' step='0.01' value='1')
   script(
     src="https://code.jquery.com/jquery-3.2.1.slim.min.js"
     integrity="sha256-k2WSCIexGzOj3Euiig+TlR8gA0EmPjuc79OEeY5L45g="
