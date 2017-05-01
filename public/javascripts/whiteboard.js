@@ -65,7 +65,7 @@ $(document).ready(function() {
   var strokes = [];
   var startX, startY, mouseX, mouseY;
 
-  var strokeStyle = "cyan";
+  var strokeStyle = "white";
   var lineWidth = 1;
 
   function redraw() {

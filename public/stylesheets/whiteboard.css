@@ -5,6 +5,9 @@
 .color {
   width: 64px;
 }
+#white {
+  background-color: white;
+}
 #red {
   background-color: red;
 }
