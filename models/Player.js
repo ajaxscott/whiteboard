@@ -1,6 +1,7 @@
 var Player = function () {
   this.id = '';
-  this.name = '';
+  this.username = '';
+  this.nickname = '';
 }
 
 module.exports = Player;
